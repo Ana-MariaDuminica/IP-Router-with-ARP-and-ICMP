@@ -1,0 +1,60 @@
+/*Duminica Ana-Maria 322CC*/
+
+Acest proiect implica implementarea unui proces pentru dirijarea pachetelor 
+printr-un router. Am implementat urmatoarele elemente:
+Procesul de dirijare
+Eficiența celei mai lungi potriviri a prefixelor (LPM)
+Protocolul ICMP.
+
+In functia main, incep prin a initializa mai intai tabela de rutare si tabela 
+ARP. Dupa initializare, functia intra intr-o bucla infinita pentru a primi si a 
+procesa continuu pachetele. Pentru fiecare pachet, verific mai intai daca adresa 
+MAC de destinatie este valida pentru interfata primita folosind functia 
+mac_adr_check. Daca adresa MAC nu este valida, pachetul este ignorat si se trece 
+la urmatorul pachet.
+
+Daca pachetul este un pachet IPv4, se efectueaza mai multe verificari si actiuni.
+Mai intai verific daca adresa IP de destinatie a pachetului este egala cu adresa 
+IP a interfetei prin care a fost primit pachetul. Daca aceste adrese sunt 
+identice, inseamna ca pachetul este destinat routerului insusi. In acest caz, 
+routerul trebuie sa trimita un mesaj ICMP de tip 0 inapoi la sursa pentru a 
+indica ca routerul este destinatie finala.
+Verific suma de control al headerului IP folosind functia check_sum. Functia 
+compara aceasta suma cu suma de control primita in pachetul receptionat.
+Verific TTl-ul pachetului folosind functia ttl_check. Daca TTL-ul este prea mic, 
+se trimite un mesaj ICMP de tip "Time exceeded". Dupa aceea, actualizez TTL-ul 
+si se recalculeaza checksum-ul headerului IP.
+Caut in tabela de rutare cea mai buna ruta catre adresa IP de destinatie 
+folosind get_best_route. Daca nu se gaseste nicio ruta, se trimite un mesaj ICMP 
+de tip "Destination unreachable". In final obtin intrarea ARP corespunzatoare 
+urmatorului hop si trimit pachetul pe interfata corecta folosind functia 
+send_to_link.
+
+Cu ajutorul functiei send_icmp, calculez lungimea totala a noului pachet ICMP, 
+care include lungimea headerului Ethernet, headerului IP si a headerului ICMP.
+Dupa aceea schimb adresele IP sursa si destinatie si adresele MAC sursa si 
+destinatie. Actualizez si setez datele din headere, tipul si codul ICMP, suma de 
+control pentru headerele IP si ICMP si actualizez lungimea totala a pachetului 
+IP. In final trimit pachetul pe interfata specificata.
+
+Functia get_arp_entry este responsabila pentru obtinerea unei intrari din tabela 
+ARP pe baza adresei IP date. Functia primeste o adresa IP si parcurge tabela ARP 
+pentru a cauta o intrare cu acea adresa IP. Daca gaseste o potrivire, returneaza 
+pointerul catre intrarea corespunzatoare din tabela ARP. Daca nu gaseste nicio 
+potrivire, returneaza NULL.
+
+Functia get_best_route implementeaza un algoritm de cautare binara pentru a gasi 
+cea mai buna ruta catre o anumita adresa IP de destinatie. Functia primeste 
+adresa IP de destinatie si utilizeaza tabela de rutare pentru a determina cea 
+mai buna ruta catre acea destinatie. Functia returneaza pointerul catre cea mai 
+buna intrare din tabela de rutare pentru adresa IP de destinatie sau NULL daca 
+nu se gaseste nicio ruta.
+
+Functia compare este folosita pentru compararea a doua elemente in cadrul 
+algoritmului de sortare folosit in qsort. Functia primeste doua pointere catre 
+elemente de tip route_table_entry si le compara pe baza valorii combinate a 
+prefixului si mastii. Aceasta combinatie este utilizata pentru a asigura ca 
+intrarile sunt sortate in ordinea corecta pentru a efectua cautarea binara 
+eficienta. Daca valorile combinate sunt diferite, functia returneaza diferenta 
+dintre ele. Daca sunt egale, functia compara mastile si returneaza diferenta 
+dintre ele.
